@@ -235,12 +235,6 @@ class MoquiShiroRealm implements Realm, Authorizer {
         return cm.doCredentialsMatch(token, info)
     }
 
-    static class ForceLoginToken extends UsernamePasswordToken {
-        ForceLoginToken(final String username, final boolean rememberMe) {
-            super (username, 'force', rememberMe)
-        }
-    }
-
     // ========== Authorization Methods ==========
 
     /**

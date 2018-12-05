@@ -829,9 +829,11 @@ class ExecutionContextFactoryImpl implements ExecutionContextFactory {
     org.apache.shiro.mgt.SecurityManager getSecurityManager() {
         if (internalSecurityManager != null) return internalSecurityManager
 
+        logger.info("shiro ini file used: ${getShiroIniNode().attribute('file-name')}")
+
         // init Apache Shiro; NOTE: init must be done here so that ecfi will be fully initialized and in the static context
         org.apache.shiro.util.Factory<org.apache.shiro.mgt.SecurityManager> factory =
-                new IniSecurityManagerFactory("classpath:shiro.ini")
+                new IniSecurityManagerFactory("classpath:${getShiroIniNode().attribute('file-name')}")
         internalSecurityManager = factory.getInstance()
         // NOTE: setting this statically just in case something uses it, but for Moqui we'll be getting the SecurityManager from the ecfi
         SecurityUtils.setSecurityManager(internalSecurityManager)
@@ -1616,6 +1618,10 @@ class ExecutionContextFactoryImpl implements ExecutionContextFactory {
 
     MNode getWebappNode(String webappName) { return confXmlRoot.first("webapp-list")
             .first({ MNode it -> it.name == "webapp" && it.attribute("name") == webappName }) }
+
+    MNode getShiroIniNode() {
+        return confXmlRoot.first("user-facade").first({MNode it -> it.name == "shiro-ini-file"})
+    }
 
     WebappInfo getWebappInfo(String webappName) {
         if (webappInfoMap.containsKey(webappName)) return webappInfoMap.get(webappName)

@@ -19,7 +19,9 @@ import org.moqui.entity.EntityCondition
 import org.moqui.impl.context.ArtifactExecutionInfoImpl.ArtifactAuthzCheck
 import org.moqui.impl.entity.EntityValueBase
 import org.moqui.impl.screen.ScreenUrlInfo
-import org.moqui.impl.util.MoquiShiroRealm
+//import org.moqui.impl.util.MoquiShiroRealm
+//import org.moqui.impl.util.MoquiLdapRealm
+import org.moqui.impl.util.ForceLoginToken
 import org.moqui.util.MNode
 import org.moqui.util.StringUtilities
 import org.moqui.util.WebUtilities
@@ -544,7 +546,10 @@ class UserFacadeImpl implements UserFacade {
             return false
         }
 
-        UsernamePasswordToken token = new MoquiShiroRealm.ForceLoginToken(username, true)
+        //UsernamePasswordToken token = new MoquiShiroRealm.ForceLoginToken(username, true)
+        //UsernamePasswordToken token = new MoquiLdapRealm.ForceLoginToken(username, true)
+        UsernamePasswordToken token = new ForceLoginToken(username, true)
+
         Subject loginSubject = makeEmptySubject()
         try {
             loginSubject.login(token)
