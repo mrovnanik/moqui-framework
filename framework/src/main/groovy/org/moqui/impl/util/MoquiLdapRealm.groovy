@@ -79,7 +79,7 @@ public class MoquiAfterLoginException extends AuthenticationException{
 @CompileStatic
 class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     protected final static Logger logger = LoggerFactory.getLogger(MoquiLdapRealm.class)
-    private LdapContextFactory contextFactory;
+    private JndiLdapContextFactory contextFactory;
 
     protected ExecutionContextFactoryImpl ecfi
     private String realmName = "moquiLdapRealm"
@@ -105,7 +105,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     protected Class<? extends AuthenticationToken> authenticationTokenClass = UsernamePasswordToken.class
 
     MoquiLdapRealm() {
-        logger.info("Initializing MoquiLdapRealm.")
+        //logger.info("Initializing MoquiLdapRealm.")
 
         // with this sort of init we may only be able to get ecfi through static reference
         this.ecfi = (ExecutionContextFactoryImpl) Moqui.executionContextFactory
@@ -115,6 +115,34 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
         //Any Object principal and Object credentials may be passed to the LDAP provider, so accept any token:
         setAuthenticationTokenClass(AuthenticationToken.class);
         this.contextFactory = new JndiLdapContextFactory();
+
+        //configure system user and password
+        this.configureSystemConnection()
+    }
+
+    void configureSystemConnection() {
+        try {
+            /*set system connection parameters*/
+            MNode ldapParams = this.ecfi.getLdapParamsNode();
+
+            //logger.info("Creating LDAP connection using config: ${ldapParams}")
+            String ldapPath = ldapParams.attribute('ldap-path')
+            String ldapSystemUsername = ldapParams.attribute('system-user')
+            String ldapSystemUserPassword = ldapParams.attribute('system-user-password')
+            String ldapUserDnTemplate = ldapParams.attribute('user-dn-template')
+            String ldapSearchBaseQueryFilter = ldapParams.attribute('search-base-query-filter')
+            String ldapSearchUserQueryFilter = ldapParams.attribute('search-user-query-filter')
+
+            this.contextFactory.url = ldapPath
+            this.contextFactory.systemPassword = ldapSystemUserPassword
+            this.contextFactory.systemUsername = ldapSystemUsername
+
+            this.userDnTemplate = ldapUserDnTemplate
+            this.ldapSearchBaseQueryFilter = ldapSearchBaseQueryFilter
+            this.ldapSearchUserQueryFilter = ldapSearchUserQueryFilter
+        } catch (Exception e) {
+            logger.error("Error setting up LDAP connection. ${e.message}")
+        }
     }
 
     void setName(String n) { realmName = n }
@@ -123,7 +151,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     String getName() { return realmName }
 
     @SuppressWarnings("UnusedDeclaration")
-    public void setContextFactory(LdapContextFactory contextFactory) {
+    public void setContextFactory(JndiLdapContextFactory contextFactory) {
         this.contextFactory = contextFactory;
     }
 
@@ -135,7 +163,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
      * @return the LdapContextFactory instance used to acquire connections to the LDAP directory during
      *         authentication attempts and authorization queries
      */
-    public LdapContextFactory getContextFactory() {
+    public JndiLdapContextFactory getContextFactory() {
         return this.contextFactory;
     }
 
@@ -161,7 +189,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     }
 
     public void setLdapSearchBaseQueryFilter(String value) {
-        logger.info("Running setLdapSearchBaseQueryFilter with value '${value}'.")
+        //logger.info("Running setLdapSearchBaseQueryFilter with value '${value}'.")
         ldapSearchBaseQueryFilter = value
     }
 
@@ -170,7 +198,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     }
 
     public void setLdapSearchUserQueryFilter(String value) {
-        logger.info("Running setLdapSearchUserQueryFilter with value '${value}'.")
+        //logger.info("Running setLdapSearchUserQueryFilter with value '${value}'.")
         ldapSearchUserQueryFilter = value
     }
 
@@ -179,7 +207,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     }
 
     public void setLdapSearchUserQuery(String value) {
-        logger.info("Running setLdapSearchUserQuery with value '${value}'.")
+        //logger.info("Running setLdapSearchUserQuery with value '${value}'.")
         ldapSearchUserQuery = value
     }
 
@@ -188,7 +216,7 @@ class MoquiLdapRealm extends AuthorizingRealm implements Realm, Authorizer {
     }
 
     public void setLdapSearchBaseQuery(String value) {
-        logger.info("Running setLdapSearchBaseQuery with value '${value}'.")
+        //logger.info("Running setLdapSearchBaseQuery with value '${value}'.")
         ldapSearchBaseQuery = value
     }
 
