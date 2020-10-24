@@ -154,10 +154,9 @@ dependencies {
 
     // SLF4J, Log4j 2 (note Log4j 2 is used by various libraries, best not to replace it even if mostly possible with SLF4J)
     compile 'org.slf4j:slf4j-api:1.7.30'
-    compile 'org.apache.logging.log4j:log4j-core:2.13.0'
-    compile 'org.apache.logging.log4j:log4j-api:2.13.0'
-    runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.0'
-    runtime 'org.apache.logging.log4j:log4j-jcl:2.13.0'
+    compile 'org.apache.logging.log4j:log4j-core:2.8.2'
+    compile 'org.apache.logging.log4j:log4j-api:2.8.2'
+    runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.8.2'
 
     // SubEtha SMTP (module as depends on old javax.mail location; also uses SLF4J, activation included elsewhere)
     compile module('org.subethamail:subethasmtp:3.1.7')
@@ -174,6 +173,10 @@ dependencies {
 
     // Liquibase (for future reference, not used yet)
     // compile 'org.liquibase:liquibase-core:3.4.2' // Apache 2.0
+
+    // Google GSON
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
 
     // ========== test dependencies ==========
     // spock-core depends on groovy-all but we are including selected groovy modules, so don't get its dependencies

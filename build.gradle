@@ -32,6 +32,7 @@ def moquiRuntime = 'runtime'
 
 def moquiConfDev = 'conf/MoquiDevConf.xml'
 def moquiConfProduction = 'conf/MoquiProductionConf.xml'
+def moquiDefaulLogDirectory = 'log'
 
 def allCleanTasks = getTasksByName('clean', true)
 def allBuildTasks = getTasksByName('build', true)
@@ -52,6 +53,23 @@ def getDefaultPropertyKeys() {
     for (Node defaultProperty in confXml.'default-property') { defaultProperties << defaultProperty.'@name' }
     defaultProperties
 }
+allTestTasks.each {
+    it.systemProperties << System.properties.subMap(getDefaultPropertyKeys())
+}
+
+// =================================
+def custMoquiConfDev = System.properties['moqui.conf.dev']
+def custMoquiConfProduction = System.properties['moqui.conf.production']
+def custMoquiLogDirectory = System.properties['moqui.conf.logging.dir']
+
+logger.lifecycle("Custom command line arguments:")
+logger.lifecycle("  moqui.conf.production: ${custMoquiConfProduction?:'not set'}")
+logger.lifecycle("  moqui.conf.dev: ${custMoquiConfDev?:'not set'}")
+logger.lifecycle("  moqui.conf.logging.dir: ${custMoquiLogDirectory?:'not set'}")
+
+if (custMoquiConfProduction) { moquiConfProduction = custMoquiConfProduction }
+if (custMoquiConfDev) { moquiConfDev = custMoquiConfDev }
+if (custMoquiLogDirectory) { moquiDefaulLogDirectory = custMoquiLogDirectory }
 
 // ========== clean tasks ==========
 
@@ -437,7 +455,6 @@ task gitMergeAll {
 }
 
 // ========== run tasks ==========
-
 task run(type: JavaExec) {
     dependsOn checkRuntime, allBuildTasks, cleanTempDir
     workingDir = '.'; jvmArgs = ['-server', '-XX:-OmitStackTraceInFastThrow']
@@ -445,10 +462,22 @@ task run(type: JavaExec) {
     // NOTE: this is a hack, using -jar instead of a class name, and then the first argument is the name of the jar file
     main = '-jar'; args = [warName]
 }
+
+task runNewPort(type: JavaExec) {
+    dependsOn getRuntime, allBuildTasks, cleanTempDir
+    workingDir = '.'; jvmArgs = ['-server', '-XX:-OmitStackTraceInFastThrow']
+    systemProperties = ['moqui.conf':moquiConfDev, 'moqui.runtime':moquiRuntime]
+    // NOTE: this is a hack, using -jar instead of a class name, and then the first argument is the name of the jar file
+    main = '-jar';
+    def argList = [warName]
+    argList.add("port=8081")
+    args = argList
+}
+
 task runProduction(type: JavaExec) {
     dependsOn checkRuntime, allBuildTasks, cleanTempDir
     workingDir = '.'; jvmArgs = ['-server', '-Xms1024M']
-    systemProperties = ['moqui.conf':moquiConfProduction, 'moqui.runtime':moquiRuntime]
+    systemProperties = ['moqui.conf':moquiConfProduction, 'moqui.runtime':moquiRuntime, 'moqui.log.directory':moquiDefaulLogDirectory]
     main = '-jar'; args = [warName]
 }
 
@@ -456,7 +485,7 @@ task load(type: JavaExec) {
     description "Run Moqui to load data; to specify data types use something like: gradle load -Ptypes=seed,seed-initial,install"
     dependsOn checkRuntime, allBuildTasks
     workingDir = '.'; jvmArgs = ['-server']
-    systemProperties = ['moqui.conf':moquiConfDev, 'moqui.runtime':moquiRuntime]
+    systemProperties = ['moqui.conf':moquiConfDev, 'moqui.runtime':moquiRuntime, 'moqui.log.directory':moquiDefaulLogDirectory]
     main = '-jar'
     def argList = [warName, 'load']
     if (project.properties.containsKey('types')) argList.add("types=${types}")
@@ -465,7 +494,7 @@ task load(type: JavaExec) {
 task loadProduction(type: JavaExec) {
     dependsOn checkRuntime, allBuildTasks
     workingDir = '.'; jvmArgs = ['-server']
-    systemProperties = ['moqui.conf':moquiConfProduction, 'moqui.runtime':moquiRuntime]
+    systemProperties = ['moqui.conf':moquiConfProduction, 'moqui.runtime':moquiRuntime, 'moqui.log.directory':moquiDefaulLogDirectory]
     main = '-jar'
     def argList = [warName, 'load']
     if (project.properties.containsKey('types')) argList.add("types=${types}")
@@ -563,8 +592,18 @@ task plusRuntimeWarTemp {
         // copy runtime directory (with a few exceptions) into a runtime directory in the war
         copy {
             from fileTree(dir: '.', include: moquiRuntime+'/**',
-                    excludes: ['**/*.jar', '**/build', moquiRuntime+'/classes/**', moquiRuntime+'/lib/**', moquiRuntime+'/log/**', moquiRuntime+'/sessions/**'])
-            into wartempFile
+                    excludes: [
+                            moquiRuntime+'/component/**/src/test/*',
+                            moquiRuntime+'/component/**/tools/__temp/*',
+                            moquiRuntime+'/component/**/tools/*.bat',
+                            '**/*.jar',
+                            '**/build',
+                            moquiRuntime+'/classes/**',
+                            moquiRuntime+'/lib/**',
+                            moquiRuntime+'/log/**',
+                            moquiRuntime+'/sessions/**'
+                    ])
+            into file('wartemp')
         }
         // copy the jar files from runtime/lib
         copy { from fileTree(dir: moquiRuntime+'/lib', include: '**/*.jar').files into 'wartemp/WEB-INF/lib' }
