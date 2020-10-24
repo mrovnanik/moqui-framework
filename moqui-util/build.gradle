@@ -55,9 +55,6 @@ dependencies {
     compile 'javax.cache:cache-api:1.0.0'
     compile 'javax.servlet:javax.servlet-api:3.1.0'
 
-    // https://mvnrepository.com/artifact/javax.activation/activation
-    compile 'javax.activation:activation:1.1.1'
-
     // SLF4J
     compile 'org.slf4j:slf4j-api:1.7.30'
     // Freemarker
